@@ -6,6 +6,7 @@ from asteroidfield import *
 from player import Player
 from asteroid import Asteroid
 from constants import *
+from shot import Shot
 
 
 
@@ -18,16 +19,21 @@ def main():
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
     dt = 0
+    
     # Create groups to clean up our game loop
+    shots = pygame.sprite.Group()
     updatable = pygame.sprite.Group()
     drawable = pygame.sprite.Group()
     asteroids = pygame.sprite.Group()
+    
 
-    player = Player((SCREEN_WIDTH / 2), (SCREEN_HEIGHT / 2))
+    player = Player((SCREEN_WIDTH / 2), (SCREEN_HEIGHT / 2), shots)
     # Add player to both groups
     updatable.add(player)
     drawable.add(player)
 
+    
+    Shot.containers = (shots, updatable, drawable)
     Asteroid.containers = (asteroids, updatable, drawable)
     AsteroidField.containers = (updatable,)
     asteroid_field = AsteroidField()
@@ -39,11 +45,25 @@ def main():
         pygame.Surface.fill(screen, (0, 0, 0)) # Make a black screen for the game
         for entity in updatable:
             entity.update(dt)
+        for asteroid in asteroids:
+            if player.colision(asteroid):
+                print("Game over!")
+                return
         for entity in drawable:
             entity.draw(screen)
+        for shot in shots:
+            for asteroid in asteroids:
+                if shot.colision(asteroid):
+                    print("Boom")
+                    asteroid.kill()
+                    shot.kill()
         pygame.display.flip()    # Refresh game screen
             
         
+        for shot in shots:
+            if shot.position.x < 0 or shot.position.x > SCREEN_WIDTH or shot.position.y < 0 or shot.position.y > SCREEN_HEIGHT:
+                shot.kill()
+
         dt = (clock.tick(60) / 1000) # Set refresh rate to 60 and save DeltaTime in dt variable
 
 
